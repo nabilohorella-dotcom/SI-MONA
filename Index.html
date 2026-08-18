@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMONA PSDA, IP & Sanitasi | Sistem Monitoring Surat Masuk Dinas PUPR Kota Ambon</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pupr: {
+                            navy: '#0F2C59',
+                            blue: '#1E40AF',
+                            yellow: '#FACC15',
+                            gold: '#EAB308',
+                            dark: '#0A192F',
+                            light: '#F8FAFC'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Print Styling for Official Disposition Slip */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-disposition, #printable-disposition * {
+                visibility: visible;
+            }
+            #printable-disposition {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                color: black;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- TOP HEADER / NAVBAR -->
+    <header class="bg-pupr-navy text-white shadow-lg sticky top-0 z-30 border-b-4 border-pupr-yellow no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Branding & Logo -->
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-pupr-yellow rounded-lg flex items-center justify-center text-pupr-navy shadow-md font-bold text-2xl">
+                        <i class="fa-solid fa-building-user"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider bg-pupr-yellow text-pupr-navy px-2 py-0.5 rounded font-bold">PEMKOT AMBON</span>
+                            <span class="text-xs text-slate-300">Dinas PUPR - SDA, IP & Sanitasi</span>
+                        </div>
+                        <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white leading-tight">
+                            SIMONA <span class="text-pupr-yellow font-normal">| PSDA, IP & Sanitasi</span>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls Right -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="text-right text-xs border-r border-slate-600 pr-4">
+                        <p class="text-slate-300 font-medium">Pengelolaan Surat Masuk</p>
+                        <p class="text-pupr-yellow font-bold">3 Seksi Utama Bidang</p>
+                    </div>
+                    <button onclick="switchTab('input')" class="bg-pupr-yellow hover:bg-yellow-400 text-pupr-navy px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg">
+                        <i class="fa-solid fa-plus-circle"></i> Registrasi Surat
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="text-white p-2 rounded-lg hover:bg-slate-800">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-900 border-t border-slate-700 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="switchTab('dashboard')" class="w-full text-left px-3 py-2 text-white hover:bg-slate-800 rounded-md">📊 Dashboard SIMONA</button>
+            <button onclick="switchTab('surat')" class="w-full text-left px-3 py-2 text-white hover:bg-slate-800 rounded-md">📑 Daftar Surat Masuk</button>
+            <button onclick="switchTab('input')" class="w-full text-left px-3 py-2 text-pupr-yellow font-bold hover:bg-slate-800 rounded-md">➕ Registrasi Surat Baru</button>
+            <button onclick="switchTab('dokumentasi')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-md">📚 SOP 3 Seksi Utama</button>
+        </div>
+    </header>
+
+    <!-- MAIN BODY CONTAINER WITH SIDEBAR & CONTENT -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col md:flex-row gap-6">
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-full md:w-64 flex-shrink-0 no-print">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden sticky top-24">
+                <div class="p-4 bg-slate-50 border-b border-slate-200">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Menu Utama System</p>
+                </div>
+                <nav class="p-2 space-y-1">
+                    <button id="nav-dashboard" onclick="switchTab('dashboard')" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-pupr-navy bg-slate-100 font-semibold transition-colors">
+                        <i class="fa-solid fa-chart-line text-blue-600 w-5"></i> Dashboard Statistik
+                    </button>
+                    <button id="nav-surat" onclick="switchTab('surat')" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+                        <span class="flex items-center gap-3"><i class="fa-solid fa-inbox text-slate-500 w-5"></i> Semua Surat Masuk</span>
+                        <span id="badge-total-count" class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                    <button id="nav-input" onclick="switchTab('input')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+                        <i class="fa-solid fa-file-circle-plus text-emerald-600 w-5"></i> Registrasi Surat Baru
+                    </button>
+                </nav>
+
+                <div class="p-4 bg-slate-50 border-t border-b border-slate-200 mt-2">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Filter 3 Seksi Dinas PUPR</p>
+                </div>
+                <nav class="p-2 space-y-1">
+                    <button onclick="filterBySeksiNav('Pengelolaan Sumber Daya Air')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-droplet text-blue-600"></i> Seksi Sumber Daya Air</span>
+                        <span id="badge-sda-count" class="bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded text-[11px]">0</span>
+                    </button>
+                    <button onclick="filterBySeksiNav('Infrastruktur Pemukiman')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-house-chimney text-emerald-600"></i> Seksi Inf. Pemukiman</span>
+                        <span id="badge-pemukiman-count" class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-[11px]">0</span>
+                    </button>
+                    <button onclick="filterBySeksiNav('Sanitasi')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-pump-soap text-teal-600"></i> Seksi Sanitasi</span>
+                        <span id="badge-sanitasi-count" class="bg-teal-50 text-teal-700 font-bold px-2 py-0.5 rounded text-[11px]">0</span>
+                    </button>
+                </nav>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-200 mt-2">
+                    <button id="nav-dokumentasi" onclick="switchTab('dokumentasi')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">
+                        <i class="fa-solid fa-book text-amber-500 text-sm"></i> SOP & Dokumentasi 3 Seksi
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT VIEW CONTAINER -->
+        <main class="flex-1 min-w-0">
+
+            <!-- ================= VIEW 1: DASHBOARD ================= -->
+            <section id="view-dashboard" class="space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-pupr-navy to-blue-900 text-white rounded-xl p-6 shadow-md relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold mb-1">Portal SIMONA PUPR Kota Ambon</h2>
+                        <p class="text-slate-200 text-sm max-w-2xl">Sistem Informasi Monitoring Laporan Surat Masuk pada Seksi Pengelolaan Sumber Daya Air, Seksi Infrastruktur Pemukiman, dan Seksi Sanitasi.</p>
+                    </div>
+                    <i class="fa-solid fa-water-ladder absolute -right-6 -bottom-6 text-9xl text-white/10 pointer-events-none"></i>
+                </div>
+
+                <!-- Stats Summary Cards - Grid of 5 Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-500 uppercase">Total Surat</p>
+                            <h3 id="stat-total" class="text-xl font-bold text-slate-800 mt-0.5">0</h3>
+                            <span class="text-[10px] text-slate-500">Semua Seksi</span>
+                        </div>
+                        <div class="w-10 h-10 bg-slate-100 text-slate-700 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-500 uppercase">Seksi SDA</p>
+                            <h3 id="stat-sda" class="text-xl font-bold text-blue-600 mt-0.5">0</h3>
+                            <span class="text-[10px] text-blue-500 font-medium">Sungai & Irigasi</span>
+                        </div>
+                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-droplet"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-500 uppercase">Seksi Inf. Pemukiman</p>
+                            <h3 id="stat-pemukiman" class="text-xl font-bold text-emerald-600 mt-0.5">0</h3>
+                            <span class="text-[10px] text-emerald-500 font-medium">Jalan & Drainase</span>
+                        </div>
+                        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-house-chimney"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-500 uppercase">Seksi Sanitasi</p>
+                            <h3 id="stat-sanitasi" class="text-xl font-bold text-teal-600 mt-0.5">0</h3>
+                            <span class="text-[10px] text-teal-500 font-medium">IPAL & MCK</span>
+                        </div>
+                        <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-pump-soap"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-500 uppercase">Perlu Tindak Lanjut</p>
+                            <h3 id="stat-urgent" class="text-xl font-bold text-amber-600 mt-0.5">0</h3>
+                            <span class="text-[10px] text-amber-600 font-medium">Urgent / Proses</span>
+                        </div>
+                        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-sm">Status Disposisi per 3 Seksi Utama (SDA, IP & Sanitasi)</h3>
+                            <span class="text-xs text-slate-400">Update Realtime</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="chartSeksiStatus"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-sm">Komposisi Sifat Prioritas Surat</h3>
+                            <span class="text-xs text-slate-400">Tingkat Urgensi</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartSifatSurat"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Priority Letters Table -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-bell text-amber-500"></i>
+                            <h3 class="font-bold text-slate-800 text-sm">Surat Masuk Terbaru Dinas PUPR Kota Ambon</h3>
+                        </div>
+                        <button onclick="switchTab('surat')" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">Lihat Semua Surat &rarr;</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3">No. Agenda</th>
+                                    <th class="p-3">Tgl Masuk</th>
+                                    <th class="p-3">Pengirim</th>
+                                    <th class="p-3">Perihal / Laporan</th>
+                                    <th class="p-3">Seksi Tujuan</th>
+                                    <th class="p-3">Sifat</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-recent-table" class="divide-y divide-slate-100">
+                                <!-- Dynamic recent rows injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 2: DAFTAR SURAT MASUK ================= -->
+            <section id="view-surat" class="space-y-6 hidden">
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Daftar Surat Masuk Dinas PUPR Kota Ambon</h2>
+                            <p class="text-xs text-slate-500">Monitoring dan pengelolaan disposisi laporan pada Seksi SDA, Seksi Infrastruktur Pemukiman, dan Seksi Sanitasi</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> Export CSV/Excel
+                            </button>
+                            <button onclick="switchTab('input')" class="bg-pupr-navy hover:bg-blue-900 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus"></i> Registrasi Surat
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200 mb-5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Cari No. Surat / Pengirim / Perihal</label>
+                            <div class="relative">
+                                <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Ketik kata kunci..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Seksi Bidang</label>
+                            <select id="filter-seksi" onchange="applyFilters()" class="w-full py-1.5 px-3 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="ALL">Semua 3 Seksi (SDA, IP, Sanitasi)</option>
+                                <option value="Pengelolaan Sumber Daya Air">Seksi Pengelolaan Sumber Daya Air</option>
+                                <option value="Infrastruktur Pemukiman">Seksi Infrastruktur Pemukiman</option>
+                                <option value="Sanitasi">Seksi Sanitasi</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Status Disposisi</label>
+                            <select id="filter-status" onchange="applyFilters()" class="w-full py-1.5 px-3 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="ALL">Semua Status</option>
+                                <option value="Belum Diproses">Belum Diproses</option>
+                                <option value="Dalam Proses">Dalam Proses</option>
+                                <option value="Ditindaklanjuti">Ditindaklanjuti</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Sifat Prioritas Surat</label>
+                            <select id="filter-sifat" onchange="applyFilters()" class="w-full py-1.5 px-3 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="ALL">Semua Sifat</option>
+                                <option value="Sangat Penting">Sangat Penting (Urgent)</option>
+                                <option value="Penting">Penting</option>
+                                <option value="Biasa">Biasa</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Main Data Table -->
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-xs border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3">No. Agenda</th>
+                                    <th class="p-3">No. Surat & Tgl</th>
+                                    <th class="p-3">Pengirim</th>
+                                    <th class="p-3 max-w-xs">Perihal Laporan</th>
+                                    <th class="p-3">Seksi Tujuan</th>
+                                    <th class="p-3">Sifat</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-center">Aksi / Disposisi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="surat-table-body" class="divide-y divide-slate-200">
+                                <!-- Dynamic JS Population -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer Table Stats -->
+                    <div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+                        <p id="table-showing-info">Menampilkan 0 dari 0 surat masuk</p>
+                        <p class="font-medium text-slate-600">Dinas PUPR Kota Ambon &copy; 2026</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 3: INPUT REGISTRASI SURAT BARU ================= -->
+            <section id="view-input" class="space-y-6 hidden">
+                <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm max-w-4xl mx-auto">
+                    <div class="border-b border-slate-200 pb-4 mb-6 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Form Registrasi Surat Masuk Dinas PUPR Kota Ambon</h2>
+                            <p class="text-xs text-slate-500">Input data surat masuk untuk diteruskan dan dimonitor oleh Seksi SDA, Seksi Infrastruktur Pemukiman, atau Seksi Sanitasi</p>
+                        </div>
+                        <span class="bg-blue-50 text-blue-700 text-xs px-3 py-1 rounded-full font-bold">Agenda Internal Dinas</span>
+                    </div>
+
+                    <form id="form-surat-masuk" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Agenda Internal <span class="text-red-500">*</span></label>
+                                <input type="text" id="input-no-agenda" required placeholder="Contoh: 600/PUPR-ABN/042/2026" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Surat Asal <span class="text-red-500">*</span></label>
+                                <input type="text" id="input-no-surat" required placeholder="Contoh: 005/Kel.Passo/II/2026" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Surat <span class="text-red-500">*</span></label>
+                                <input type="date" id="input-tgl-surat" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Diterima Agendaris <span class="text-red-500">*</span></label>
+                                <input type="date" id="input-tgl-diterima" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Pengirim / Instansi / Komunitas Warga <span class="text-red-500">*</span></label>
+                            <input type="text" id="input-pengirim" required placeholder="Contoh: Kelurahan Latuhalat / BKM Sirimau / Pengurus RT 02 Passo" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Perihal / Ringkasan Isi Laporan Usulan <span class="text-red-500">*</span></label>
+                            <textarea id="input-perihal" rows="3" required placeholder="Tuliskan perihal surat, usulan fisik, usulan IPAL/MCK/sanitasi, atau keluhan jaringan air/pemukiman secara rinci..." class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Seksi Tujuan <span class="text-red-500">*</span></label>
+                                <select id="input-seksi" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                                    <option value="">-- Pilih Seksi --</option>
+                                    <option value="Pengelolaan Sumber Daya Air">Seksi Pengelolaan Sumber Daya Air</option>
+                                    <option value="Infrastruktur Pemukiman">Seksi Infrastruktur Pemukiman</option>
+                                    <option value="Sanitasi">Seksi Sanitasi</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Sifat Prioritas Surat <span class="text-red-500">*</span></label>
+                                <select id="input-sifat" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                                    <option value="Biasa">Biasa</option>
+                                    <option value="Penting">Penting</option>
+                                    <option value="Sangat Penting">Sangat Penting (Urgent)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Status Awal Disposisi <span class="text-red-500">*</span></label>
+                                <select id="input-status" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                                    <option value="Belum Diproses">Belum Diproses</option>
+                                    <option value="Dalam Proses">Dalam Proses</option>
+                                    <option value="Ditindaklanjuti">Ditindaklanjuti</option>
+                                    <option value="Selesai">Selesai</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Catatan Disposisi Kepala Dinas / Seksi</label>
+                            <input type="text" id="input-catatan" placeholder="Contoh: Lakukan survei teknis ke lokasi dan buatkan laporan perkiraan RAB..." class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Lampiran Digital (Simulasi Berkas PDF/Gambar)</label>
+                            <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:bg-slate-50 transition cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+                                <p class="text-xs text-slate-600 font-medium">Klik atau seret berkas surat fisik (PDF/JPG max 5MB)</p>
+                                <p class="text-xs text-slate-400 mt-1">Berkas terarsip digital secara otomatis pada server dinas</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+                            <button type="button" onclick="switchTab('surat')" class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">Batal</button>
+                            <button type="submit" class="px-6 py-2.5 text-sm font-bold bg-pupr-navy hover:bg-blue-900 text-white rounded-lg shadow-md transition flex items-center gap-2">
+                                <i class="fa-solid fa-save"></i> Simpan & Daftarkan Surat
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 4: DOKUMENTASI & SOP 3 SEKSI ================= -->
+            <section id="view-dokumentasi" class="space-y-6 hidden">
+                <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-8">
+                    <div>
+                        <span class="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Manual & SOP 3 Seksi</span>
+                        <h2 class="text-2xl font-bold text-slate-800 mt-2">Dokumentasi SOP Pengelolaan Surat Masuk Dinas PUPR Kota Ambon</h2>
+                        <p class="text-sm text-slate-600 mt-1">Panduan Operasional Standar Disposisi Laporan dan Usulan Infrastruktur Air, Pemukiman, dan Sanitasi Dinas PUPR Kota Ambon.</p>
+                    </div>
+
+                    <!-- Flow Diagram -->
+                    <div class="border border-slate-200 rounded-xl p-5 bg-slate-50">
+                        <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-diagram-project text-blue-600"></i> Alur Kerja Disposisi Laporan Surat Masuk
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="w-8 h-8 bg-blue-100 text-blue-700 font-bold rounded-full flex items-center justify-center mx-auto mb-2">1</div>
+                                <h4 class="font-bold text-xs text-slate-800">Registrasi Agenda</h4>
+                                <p class="text-xs text-slate-500 mt-1">Petugas agendaris mencatat No. Surat, Pengirim, dan Perihal usulan ke sistem SIMONA.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="w-8 h-8 bg-amber-100 text-amber-700 font-bold rounded-full flex items-center justify-center mx-auto mb-2">2</div>
+                                <h4 class="font-bold text-xs text-slate-800">Telaah & Disposisi Kepala</h4>
+                                <p class="text-xs text-slate-500 mt-1">Surat ditelaah dan diteruskan ke Kepala Seksi terkait (SDA, IP, atau Sanitasi).</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="w-8 h-8 bg-purple-100 text-purple-700 font-bold rounded-full flex items-center justify-center mx-auto mb-2">3</div>
+                                <h4 class="font-bold text-xs text-slate-800">Survei & Tindak Lanjut Seksi</h4>
+                                <p class="text-xs text-slate-500 mt-1">Kasie menugaskan tim teknis untuk survei lokasi dan penyusunan Perencanaan/RAB.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="w-8 h-8 bg-emerald-100 text-emerald-700 font-bold rounded-full flex items-center justify-center mx-auto mb-2">4</div>
+                                <h4 class="font-bold text-xs text-slate-800">Update Status & Pengarsipan</h4>
+                                <p class="text-xs text-slate-500 mt-1">Status laporan diperbarui hingga selesai dan diusulkan pada RKPD / Musrenbang Kota Ambon.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 Core Sections Overview -->
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base mb-3">Ruang Lingkup 3 Seksi Utama Dinas PUPR Kota Ambon</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Seksi SDA -->
+                            <div class="border border-blue-200 bg-blue-50/50 p-4 rounded-xl">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-9 h-9 bg-blue-600 text-white rounded-lg flex items-center justify-center text-base font-bold">
+                                        <i class="fa-solid fa-droplet"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-blue-900">Seksi Sumber Daya Air</h4>
+                                        <p class="text-[11px] text-blue-700 font-medium">Sungai, Irigasi & Pantai</p>
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed">
+                                    <li>Normalisasi dan pengerukan sedimentasi sungai utama Ambon (Wai Batu Merah, Wai Ruhu, Wai Tomu).</li>
+                                    <li>Pembangunan dan rehabilitasi jaringan irigasi & air baku.</li>
+                                    <li>Pembangunan breakwater, talud penahan tanah, dan penanganan abrasi pantai.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Seksi IP -->
+                            <div class="border border-emerald-200 bg-emerald-50/50 p-4 rounded-xl">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-9 h-9 bg-emerald-600 text-white rounded-lg flex items-center justify-center text-base font-bold">
+                                        <i class="fa-solid fa-house-chimney"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-emerald-900">Seksi Inf. Pemukiman</h4>
+                                        <p class="text-[11px] text-emerald-700 font-medium">Jalan & Drainase Lingkungan</p>
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed">
+                                    <li>Pembangunan jalan lingkungan pemukiman (paving block / aspal mikro).</li>
+                                    <li>Rehabilitasi jaringan drainase mikro pemukiman pencegah genangan.</li>
+                                    <li>Penataan kawasan pemukiman kumuh dan PJU Pemukiman.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Seksi Sanitasi -->
+                            <div class="border border-teal-200 bg-teal-50/50 p-4 rounded-xl">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-9 h-9 bg-teal-600 text-white rounded-lg flex items-center justify-center text-base font-bold">
+                                        <i class="fa-solid fa-pump-soap"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-teal-900">Seksi Sanitasi</h4>
+                                        <p class="text-[11px] text-teal-700 font-medium">IPAL, IPLT & MCK Komunal</p>
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed">
+                                    <li>Pembangunan dan pengelolaan Sistem Pengolahan Air Limbah Domestik (SPALD / IPAL Komunal).</li>
+                                    <li>Pengadaan dan rehabilitasi MCK umum / MCK plus pemukiman padat.</li>
+                                    <li>Pengembangan sarana prasarana tempat pengolahan sampah TPS3R / IPLT Kota Ambon.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-slate-800 text-base">Petunjuk Operasional Aplikasi Web</h3>
+                        <div class="space-y-3">
+                            <details class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 cursor-pointer">
+                                <summary class="font-bold text-xs text-slate-800">Bagaimana cara mencetak Lembar Disposisi Resmi?</summary>
+                                <p class="text-xs text-slate-600 mt-2 pl-4">Klik tombol <span class="bg-pupr-navy text-white text-[10px] font-bold px-2 py-0.5 rounded">Disposisi</span> pada baris surat di Daftar Surat Masuk. Setelah modal terbuka, klik "Cetak Lembar Disposisi". Format standar akan siap dicetak.</p>
+                            </details>
+                            <details class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 cursor-pointer">
+                                <summary class="font-bold text-xs text-slate-800">Bagaimana memisahkan tampilan surat antara Seksi SDA, Seksi IP, dan Seksi Sanitasi?</summary>
+                                <p class="text-xs text-slate-600 mt-2 pl-4">Gunakan menu di sidebar kiri "Filter 3 Seksi Dinas PUPR", atau pilih dropdown "Filter Seksi" pada halaman Daftar Surat Masuk untuk melihat laporan khusus seksi terkait.</p>
+                            </details>
+                            <details class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 cursor-pointer">
+                                <summary class="font-bold text-xs text-slate-800">Bagaimana mengeksport seluruh laporan ke file Excel/CSV?</summary>
+                                <p class="text-xs text-slate-600 mt-2 pl-4">Klik tombol hijau <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">Export CSV/Excel</span> di kanan atas tabel surat masuk. File `.csv` akan otomatis terunduh.</p>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ================= MODAL DISPOSISI RESMI ================= -->
+    <div id="modal-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 no-print">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200">
+            <div class="p-4 bg-pupr-navy text-white flex items-center justify-between sticky top-0 z-10">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-signature text-pupr-yellow"></i>
+                    <h3 class="font-bold text-sm">Lembar Disposisi Resmi - Dinas PUPR Kota Ambon</h3>
+                </div>
+                <button onclick="closeModalDetail()" class="text-slate-300 hover:text-white text-lg px-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6" id="modal-content-area">
+                <!-- Dynamic Content injected via JavaScript -->
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center sticky bottom-0">
+                <button onclick="closeModalDetail()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg">Tutup</button>
+                <div class="flex gap-2">
+                    <button onclick="printCurrentDisposition()" class="px-4 py-2 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-lg flex items-center gap-2 shadow">
+                        <i class="fa-solid fa-print"></i> Cetak Lembar Disposisi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM DELETE CONFIRMATION MODAL -->
+    <div id="modal-confirm-delete" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 no-print">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+            <div class="flex items-center gap-3 text-red-600">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-slate-800">Konfirmasi Hapus Data</h3>
+                    <p class="text-xs text-slate-500">Tindakan ini tidak dapat dibatalkan</p>
+                </div>
+            </div>
+            <p id="delete-modal-msg" class="text-xs text-slate-600 leading-relaxed">Apakah Anda yakin ingin menghapus data surat ini dari sistem?</p>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+                <button id="btn-confirm-delete-action" class="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow">Hapus Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINTABLE CONTAINER (HIDDEN FROM SCREEN, VISIBLE IN PRINT) -->
+    <div id="printable-disposition" class="hidden">
+        <!-- Injected via JS when printing -->
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // Default Initial Sample Data covering 3 Sections (SDA, IP, Sanitasi)
+        const initialSuratData = [
+            {
+                id: 'SRT-001',
+                noAgenda: '600/PUPR-ABN/001/2026',
+                noSurat: '005/NR-BM/I/2026',
+                tglSurat: '2026-01-15',
+                tglDiterima: '2026-01-16',
+                pengirim: 'Pemerintah Negeri Batu Merah',
+                perihal: 'Permohonan Normalisasi & Pengerukan Sedimentasi Sungai Batu Merah Antisipasi Musim Hujan',
+                seksi: 'Pengelolaan Sumber Daya Air',
+                sifat: 'Sangat Penting',
+                status: 'Dalam Proses',
+                catatan: 'Segera jadwalkan survei teknis lapangan bersama tim SDA minggu ini.'
+            },
+            {
+                id: 'SRT-002',
+                noAgenda: '600/PUPR-ABN/002/2026',
+                noSurat: '120/RT03-KDM/I/2026',
+                tglSurat: '2026-01-20',
+                tglDiterima: '2026-01-21',
+                pengirim: 'Pengurus RT 03 / RW 02 Kudamati',
+                perihal: 'Usulan Perbaikan Drainase Lingkungan & Paving Block Jalan Pemukiman',
+                seksi: 'Infrastruktur Pemukiman',
+                sifat: 'Penting',
+                status: 'Belum Diproses',
+                catatan: 'Masukkan dalam daftar prioritas usulan Musrenbang Kota Ambon.'
+            },
+            {
+                id: 'SRT-003',
+                noAgenda: '600/PUPR-ABN/003/2026',
+                noSurat: '045/Kel-LTH/I/2026',
+                tglSurat: '2026-01-25',
+                tglDiterima: '2026-01-26',
+                pengirim: 'Pemerintah Negeri Latuhalat',
+                perihal: 'Permohonan Pembangunan IPAL Komunal Terpadu dan MCK Plus Pemukiman Pesisir',
+                seksi: 'Sanitasi',
+                sifat: 'Sangat Penting',
+                status: 'Dalam Proses',
+                catatan: 'Tim Sanitasi lakukan cek kelayakan lokasi dan ketersediaan lahan hibah warga.'
+            },
+            {
+                id: 'SRT-004',
+                noAgenda: '600/PUPR-ABN/004/2026',
+                noSurat: '018/Cmt-BG/II/2026',
+                tglSurat: '2026-02-02',
+                tglDiterima: '2026-02-03',
+                pengirim: 'Kantor Camat Baguala Passo',
+                perihal: 'Laporan Kerusakan Penahan Gelombang Pantai & Talud Sungai Passo',
+                seksi: 'Pengelolaan Sumber Daya Air',
+                sifat: 'Sangat Penting',
+                status: 'Ditindaklanjuti',
+                catatan: 'Tim SDA telah pengujian fisik lapangan. Dibuatkan RAB penanganan darurat.'
+            },
+            {
+                id: 'SRT-005',
+                noAgenda: '600/PUPR-ABN/005/2026',
+                noSurat: '88/BKM-NSW/II/2026',
+                tglSurat: '2026-02-08',
+                tglDiterima: '2026-02-09',
+                pengirim: 'BKM Nusaniwe Sejahtera',
+                perihal: 'Proposal Program Penataan Kawasan Pemukiman Kumuh & Penerangan Jalan Pemukiman',
+                seksi: 'Infrastruktur Pemukiman',
+                sifat: 'Biasa',
+                status: 'Selesai',
+                catatan: 'Telah disetujui dalam RKPD Kota Ambon Tahun 2026.'
+            },
+            {
+                id: 'SRT-006',
+                noAgenda: '600/PUPR-ABN/006/2026',
+                noSurat: '012/Kel-BTG/II/2026',
+                tglSurat: '2026-02-12',
+                tglDiterima: '2026-02-13',
+                pengirim: 'Kelurahan Benteng Nusaniwe',
+                perihal: 'Usulan Pembangunan Fasilitas TPS3R Pengolahan Sampah dan Penataan Sanitasi Perkotaan',
+                seksi: 'Sanitasi',
+                sifat: 'Penting',
+                status: 'Belum Diproses',
+                catatan: 'Koordinasikan dengan Seksi Sanitasi untuk peninjauan lokasi sarana sanitasi.'
+            },
+            {
+                id: 'SRT-007',
+                noAgenda: '600/PUPR-ABN/007/2026',
+                noSurat: '042/Kel-WHR/II/2026',
+                tglSurat: '2026-02-14',
+                tglDiterima: '2026-02-15',
+                pengirim: 'Kelurahan Waiheru',
+                perihal: 'Permohonan Pembangunan Embung Penampung Air Baku & Saluran Irigasi Pertanian',
+                seksi: 'Pengelolaan Sumber Daya Air',
+                sifat: 'Penting',
+                status: 'Dalam Proses',
+                catatan: 'Tim teknis SDA sedang koordinasi mengenai status lahan lokasi embung.'
+            }
+        ];
+
+        // Global State Variables
+        let suratData = [];
+        let chartSeksiStatusInstance = null;
+        let chartSifatSuratInstance = null;
+        let pendingDeleteId = null;
+
+        window.onload = function() {
+            // Load state from LocalStorage or initialize default
+            const stored = localStorage.getItem('simona_3seksi_pupr_ambon');
+            if (stored) {
+                try {
+                    suratData = JSON.parse(stored);
+                } catch(e) {
+                    suratData = [...initialSuratData];
+                }
+            } else {
+                suratData = [...initialSuratData];
+                saveToStorage();
+            }
+
+            // Initialize Dashboard & UI
+            renderDashboard();
+            renderTable(suratData);
+            updateBadges();
+        };
+
+        function saveToStorage() {
+            localStorage.setItem('simona_3seksi_pupr_ambon', JSON.stringify(suratData));
+        }
+
+        function switchTab(tabName) {
+            // Hide all views
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-surat').classList.add('hidden');
+            document.getElementById('view-input').classList.add('hidden');
+            document.getElementById('view-dokumentasi').classList.add('hidden');
+
+            // Reset navbar active styling
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-100', 'font-semibold', 'text-pupr-navy');
+                btn.classList.add('text-slate-600');
+            });
+
+            // Show selected tab
+            if (tabName === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('nav-dashboard').classList.add('bg-slate-100', 'font-semibold', 'text-pupr-navy');
+                renderDashboard();
+            } else if (tabName === 'surat') {
+                document.getElementById('view-surat').classList.remove('hidden');
+                document.getElementById('nav-surat').classList.add('bg-slate-100', 'font-semibold', 'text-pupr-navy');
+                applyFilters();
+            } else if (tabName === 'input') {
+                document.getElementById('view-input').classList.remove('hidden');
+                document.getElementById('nav-input').classList.add('bg-slate-100', 'font-semibold', 'text-pupr-navy');
+                // Auto set today date
+                document.getElementById('input-tgl-diterima').valueAsDate = new Date();
+                document.getElementById('input-tgl-surat').valueAsDate = new Date();
+            } else if (tabName === 'dokumentasi') {
+                document.getElementById('view-dokumentasi').classList.remove('hidden');
+                document.getElementById('nav-dokumentasi').classList.add('bg-slate-100', 'font-semibold', 'text-pupr-navy');
+            }
+
+            // Close mobile menu if open
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function filterBySeksiNav(seksiName) {
+            switchTab('surat');
+            document.getElementById('filter-seksi').value = seksiName;
+            applyFilters();
+        }
+
+        function updateBadges() {
+            const total = suratData.length;
+            const sda = suratData.filter(s => s.seksi === 'Pengelolaan Sumber Daya Air').length;
+            const pemukiman = suratData.filter(s => s.seksi === 'Infrastruktur Pemukiman').length;
+            const sanitasi = suratData.filter(s => s.seksi === 'Sanitasi').length;
+            const urgentCount = suratData.filter(s => s.sifat === 'Sangat Penting' || s.status === 'Belum Diproses' || s.status === 'Dalam Proses').length;
+
+            document.getElementById('badge-total-count').innerText = total;
+            document.getElementById('badge-sda-count').innerText = sda;
+            document.getElementById('badge-pemukiman-count').innerText = pemukiman;
+            document.getElementById('badge-sanitasi-count').innerText = sanitasi;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-sda').innerText = sda;
+            document.getElementById('stat-pemukiman').innerText = pemukiman;
+            document.getElementById('stat-sanitasi').innerText = sanitasi;
+            document.getElementById('stat-urgent').innerText = urgentCount;
+        }
+
+        function renderDashboard() {
+            updateBadges();
+
+            // Populate recent items in dashboard
+            const recentBody = document.getElementById('dashboard-recent-table');
+            recentBody.innerHTML = '';
+
+            const recentSurat = [...suratData].reverse().slice(0, 5);
+
+            if (recentSurat.length === 0) {
+                recentBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">Belum ada data surat masuk.</td></tr>`;
+            } else {
+                recentSurat.forEach(s => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-50 transition";
+                    row.innerHTML = `
+                        <td class="p-3 font-semibold text-slate-800">${s.noAgenda}</td>
+                        <td class="p-3 text-xs text-slate-600">${formatDateID(s.tglDiterima)}</td>
+                        <td class="p-3 font-medium text-slate-700">${s.pengirim}</td>
+                        <td class="p-3 max-w-xs truncate text-slate-600">${s.perihal}</td>
+                        <td class="p-3">${getSeksiBadge(s.seksi)}</td>
+                        <td class="p-3">${getSifatBadge(s.sifat)}</td>
+                        <td class="p-3">${getStatusBadge(s.status)}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openDetailModal('${s.id}')" class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded text-xs font-semibold transition">
+                                <i class="fa-solid fa-eye"></i> Detail
+                            </button>
+                        </td>
+                    `;
+                    recentBody.appendChild(row);
+                });
+            }
+
+            // Render Chart.js
+            initCharts();
+        }
+
+        function initCharts() {
+            // Group Data for Section vs Status (3 Seksi: SDA, IP, Sanitasi)
+            const seksiList = ['Pengelolaan Sumber Daya Air', 'Infrastruktur Pemukiman', 'Sanitasi'];
+
+            const datasets = [
+                {
+                    label: 'Belum Diproses',
+                    data: seksiList.map(s => suratData.filter(item => item.seksi === s && item.status === 'Belum Diproses').length),
+                    backgroundColor: '#EF4444'
+                },
+                {
+                    label: 'Dalam Proses',
+                    data: seksiList.map(s => suratData.filter(item => item.seksi === s && item.status === 'Dalam Proses').length),
+                    backgroundColor: '#F59E0B'
+                },
+                {
+                    label: 'Ditindaklanjuti',
+                    data: seksiList.map(s => suratData.filter(item => item.seksi === s && item.status === 'Ditindaklanjuti').length),
+                    backgroundColor: '#8B5CF6'
+                },
+                {
+                    label: 'Selesai',
+                    data: seksiList.map(s => suratData.filter(item => item.seksi === s && item.status === 'Selesai').length),
+                    backgroundColor: '#10B981'
+                }
+            ];
+
+            const ctxSeksi = document.getElementById('chartSeksiStatus').getContext('2d');
+            if (chartSeksiStatusInstance) chartSeksiStatusInstance.destroy();
+            
+            chartSeksiStatusInstance = new Chart(ctxSeksi, {
+                type: 'bar',
+                data: {
+                    labels: ['Seksi SDA', 'Seksi Inf. Pemukiman', 'Seksi Sanitasi'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 10 } } }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+
+            // Chart Sifat Surat (Pie)
+            const countSangatPenting = suratData.filter(s => s.sifat === 'Sangat Penting').length;
+            const countPenting = suratData.filter(s => s.sifat === 'Penting').length;
+            const countBiasa = suratData.filter(s => s.sifat === 'Biasa').length;
+
+            const ctxSifat = document.getElementById('chartSifatSurat').getContext('2d');
+            if (chartSifatSuratInstance) chartSifatSuratInstance.destroy();
+
+            chartSifatSuratInstance = new Chart(ctxSifat, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sangat Penting', 'Penting', 'Biasa'],
+                    datasets: [{
+                        data: [countSangatPenting, countPenting, countBiasa],
+                        backgroundColor: ['#EF4444', '#F59E0B', '#64748B']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function applyFilters() {
+            const searchVal = document.getElementById('filter-search').value.toLowerCase();
+            const seksiVal = document.getElementById('filter-seksi').value;
+            const statusVal = document.getElementById('filter-status').value;
+            const sifatVal = document.getElementById('filter-sifat').value;
+
+            const filtered = suratData.filter(s => {
+                const matchSearch = s.noAgenda.toLowerCase().includes(searchVal) ||
+                                    s.noSurat.toLowerCase().includes(searchVal) ||
+                                    s.pengirim.toLowerCase().includes(searchVal) ||
+                                    s.perihal.toLowerCase().includes(searchVal);
+                
+                const matchSeksi = (seksiVal === 'ALL') || (s.seksi === seksiVal);
+                const matchStatus = (statusVal === 'ALL') || (s.status === statusVal);
+                const matchSifat = (sifatVal === 'ALL') || (s.sifat === sifatVal);
+
+                return matchSearch && matchSeksi && matchStatus && matchSifat;
+            });
+
+            renderTable(filtered);
+        }
+
+        function renderTable(dataList) {
+            const tbody = document.getElementById('surat-table-body');
+            tbody.innerHTML = '';
+
+            document.getElementById('table-showing-info').innerText = `Menampilkan ${dataList.length} dari ${suratData.length} surat masuk`;
+
+            if (dataList.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="p-8 text-center text-slate-400">
+                            <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300"></i>
+                            <p class="font-medium">Tidak ada data surat masuk yang sesuai filter.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            dataList.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-800">${s.noAgenda}</td>
+                    <td class="p-3">
+                        <div class="font-semibold text-slate-700">${s.noSurat}</div>
+                        <div class="text-xs text-slate-400">Tgl: ${formatDateID(s.tglSurat)}</div>
+                    </td>
+                    <td class="p-3 font-medium text-slate-700">${s.pengirim}</td>
+                    <td class="p-3 max-w-xs">
+                        <p class="line-clamp-2 text-slate-600">${s.perihal}</p>
+                    </td>
+                    <td class="p-3">${getSeksiBadge(s.seksi)}</td>
+                    <td class="p-3">${getSifatBadge(s.sifat)}</td>
+                    <td class="p-3">
+                        <select onchange="updateSuratStatus('${s.id}', this.value)" class="text-xs font-semibold p-1 rounded border border-slate-300 bg-white shadow-sm focus:outline-none">
+                            <option value="Belum Diproses" ${s.status === 'Belum Diproses' ? 'selected' : ''}>Belum Diproses</option>
+                            <option value="Dalam Proses" ${s.status === 'Dalam Proses' ? 'selected' : ''}>Dalam Proses</option>
+                            <option value="Ditindaklanjuti" ${s.status === 'Ditindaklanjuti' ? 'selected' : ''}>Ditindaklanjuti</option>
+                            <option value="Selesai" ${s.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+                        </select>
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openDetailModal('${s.id}')" title="Buka Detail & Disposisi" class="bg-pupr-navy hover:bg-blue-900 text-white text-xs px-2.5 py-1.5 rounded-md font-semibold transition flex items-center gap-1">
+                                <i class="fa-solid fa-print"></i> Disposisi
+                            </button>
+                            <button onclick="promptDeleteSurat('${s.id}')" title="Hapus Data" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs p-1.5 rounded-md transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const newSurat = {
+                id: 'SRT-' + Date.now().toString().slice(-5),
+                noAgenda: document.getElementById('input-no-agenda').value,
+                noSurat: document.getElementById('input-no-surat').value,
+                tglSurat: document.getElementById('input-tgl-surat').value,
+                tglDiterima: document.getElementById('input-tgl-diterima').value,
+                pengirim: document.getElementById('input-pengirim').value,
+                perihal: document.getElementById('input-perihal').value,
+                seksi: document.getElementById('input-seksi').value,
+                sifat: document.getElementById('input-sifat').value,
+                status: document.getElementById('input-status').value,
+                catatan: document.getElementById('input-catatan').value || 'Mohon ditindaklanjuti sesuai tugas fungsi seksi.'
+            };
+
+            suratData.unshift(newSurat);
+            saveToStorage();
+
+            // Reset form
+            document.getElementById('form-surat-masuk').reset();
+
+            // Toast feedback
+            showToast('Surat masuk berhasil didaftarkan ke sistem SIMONA!', 'success');
+
+            // Redirect to Table View
+            switchTab('surat');
+        }
+
+        function updateSuratStatus(id, newStatus) {
+            const index = suratData.findIndex(s => s.id === id);
+            if (index !== -1) {
+                suratData[index].status = newStatus;
+                saveToStorage();
+                showToast(`Status No. Agenda ${suratData[index].noAgenda} diperbarui menjadi '${newStatus}'`, 'info');
+                updateBadges();
+            }
+        }
+
+        function promptDeleteSurat(id) {
+            const item = suratData.find(s => s.id === id);
+            if (!item) return;
+
+            pendingDeleteId = id;
+            document.getElementById('delete-modal-msg').innerText = `Apakah Anda yakin ingin menghapus data surat No. Agenda "${item.noAgenda}" (${item.pengirim}) dari sistem SIMONA?`;
+            
+            const confirmBtn = document.getElementById('btn-confirm-delete-action');
+            confirmBtn.onclick = function() {
+                executeDeleteSurat();
+            };
+
+            document.getElementById('modal-confirm-delete').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('modal-confirm-delete').classList.add('hidden');
+            pendingDeleteId = null;
+        }
+
+        function executeDeleteSurat() {
+            if (!pendingDeleteId) return;
+
+            const index = suratData.findIndex(s => s.id === pendingDeleteId);
+            if (index !== -1) {
+                suratData.splice(index, 1);
+                saveToStorage();
+                applyFilters();
+                updateBadges();
+                showToast('Data surat berhasil dihapus dari sistem.', 'warning');
+            }
+            closeDeleteModal();
+        }
+
+        function openDetailModal(id) {
+            const item = suratData.find(s => s.id === id);
+            if (!item) return;
+
+            const modalContent = document.getElementById('modal-content-area');
+            const printableArea = document.getElementById('printable-disposition');
+
+            const contentHtml = `
+                <!-- Official Header PUPR Kota Ambon -->
+                <div class="border-b-2 border-slate-900 pb-4 text-center space-y-1">
+                    <div class="flex items-center justify-center gap-3 mb-1">
+                        <div class="w-10 h-10 bg-pupr-navy rounded flex items-center justify-center text-pupr-yellow font-bold text-xl">
+                            <i class="fa-solid fa-building-user"></i>
+                        </div>
+                        <div class="text-left">
+                            <h4 class="font-bold text-slate-900 uppercase text-xs tracking-wider">PEMERINTAH KOTA AMBON</h4>
+                            <h3 class="font-extrabold text-slate-900 text-sm tracking-tight uppercase">DINAS PEKERJAAN UMUM DAN PENATAAN RUANG</h3>
+                            <h5 class="font-bold text-blue-900 text-xs tracking-wide uppercase">SUMBER DAYA AIR, INFRASTRUKTUR PEMUKIMAN & SANITASI</h5>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-600">Jl. Sultan Hairun No. 1 Ambon, Maluku | Telp/Fax: (0991) 352231</p>
+                    <div class="pt-2">
+                        <span class="inline-block bg-slate-900 text-white font-bold text-xs uppercase px-4 py-1 rounded">LEMBAR DISPOSISI RESMI DINAS</span>
+                    </div>
+                </div>
+
+                <!-- Envelope Metadata Grid -->
+                <div class="grid grid-cols-2 gap-4 text-xs border border-slate-300 p-3 rounded-lg bg-slate-50">
+                    <div>
+                        <span class="text-slate-500 block">Surat Dari / Instansi:</span>
+                        <p class="font-bold text-slate-800 text-sm mt-0.5">${item.pengirim}</p>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">No. Agenda Internal Dinas:</span>
+                        <p class="font-bold text-blue-800 text-sm mt-0.5">${item.noAgenda}</p>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">No. Surat Asal:</span>
+                        <p class="font-semibold text-slate-800 mt-0.5">${item.noSurat}</p>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">Tanggal Surat & Diterima:</span>
+                        <p class="font-semibold text-slate-800 mt-0.5">${formatDateID(item.tglSurat)} (Diterima: ${formatDateID(item.tglDiterima)})</p>
+                    </div>
+                </div>
+
+                <!-- Subject Area -->
+                <div class="border border-slate-300 p-3 rounded-lg">
+                    <span class="text-xs text-slate-500 block">Perihal / Ringkasan Isi Laporan Usulan:</span>
+                    <p class="text-xs font-semibold text-slate-800 mt-1 leading-relaxed">${item.perihal}</p>
+                </div>
+
+                <!-- Disposition Target & Priorities -->
+                <div class="grid grid-cols-3 gap-3 text-xs">
+                    <div class="p-2.5 border rounded-lg bg-blue-50/50 border-blue-200">
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Diteruskan Kepada Seksi:</span>
+                        <p class="font-bold text-blue-900 mt-1">${item.seksi}</p>
+                    </div>
+                    <div class="p-2.5 border rounded-lg bg-amber-50/50 border-amber-200">
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Sifat Prioritas Surat:</span>
+                        <p class="font-bold text-amber-900 mt-1">${item.sifat}</p>
+                    </div>
+                    <div class="p-2.5 border rounded-lg bg-emerald-50/50 border-emerald-200">
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Status Tindak Lanjut:</span>
+                        <p class="font-bold text-emerald-900 mt-1">${item.status}</p>
+                    </div>
+                </div>
+
+                <!-- Instruction Checklist Box -->
+                <div class="border border-slate-300 rounded-lg p-3 space-y-2">
+                    <span class="text-xs font-bold text-slate-700 block uppercase border-b pb-1">Petunjuk Disposisi Kepala Dinas / Kepala Seksi:</span>
+                    <div class="grid grid-cols-2 gap-2 text-xs text-slate-700">
+                        <label class="flex items-center gap-2"><input type="checkbox" checked disabled class="rounded"> Tanggapi & Pelajari Usulan</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" checked disabled class="rounded"> Survei Teknis Lapangan</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" disabled class="rounded"> Buat Perkiraan RAB / Desain Teknis</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" disabled class="rounded"> Koordinasi Musrenbang / RKPD</label>
+                    </div>
+                </div>
+
+                <!-- Notes & Signature Line -->
+                <div class="border border-slate-300 p-3 rounded-lg bg-yellow-50/30">
+                    <span class="text-xs text-slate-500 block font-bold">Catatan / Instruksi Khusus:</span>
+                    <p class="text-xs font-medium text-slate-800 mt-1 italic">"${item.catatan}"</p>
+                </div>
+
+                <div class="pt-6 grid grid-cols-2 text-center text-xs">
+                    <div>
+                        <p class="text-slate-500">Diterima Seksi Tanggal: ..........</p>
+                        <p class="mt-12 font-bold text-slate-800">( Kepala ${item.seksi} )</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500">Ambon, ${formatDateID(item.tglDiterima)}</p>
+                        <p class="font-bold text-slate-800">Kepala Dinas PUPR Kota Ambon</p>
+                        <p class="mt-12 font-bold text-slate-800 text-underline">NIP. 19780412 200312 1 002</p>
+                    </div>
+                </div>
+            `;
+
+            modalContent.innerHTML = contentHtml;
+            printableArea.innerHTML = contentHtml;
+
+            document.getElementById('modal-detail').classList.remove('hidden');
+        }
+
+        function closeModalDetail() {
+            document.getElementById('modal-detail').classList.add('hidden');
+        }
+
+        function printCurrentDisposition() {
+            window.print();
+        }
+
+        function exportToCSV() {
+            if (suratData.length === 0) {
+                showToast('Tidak ada data untuk diexport.', 'warning');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID,No Agenda,No Surat,Tanggal Surat,Tanggal Diterima,Pengirim,Perihal,Seksi,Sifat,Status,Catatan\n";
+
+            suratData.forEach(s => {
+                const row = [
+                    s.id,
+                    `"${s.noAgenda}"`,
+                    `"${s.noSurat}"`,
+                    s.tglSurat,
+                    s.tglDiterima,
+                    `"${s.pengirim.replace(/"/g, '""')}"`,
+                    `"${s.perihal.replace(/"/g, '""')}"`,
+                    `"${s.seksi}"`,
+                    `"${s.sifat}"`,
+                    `"${s.status}"`,
+                    `"${s.catatan.replace(/"/g, '""')}"`
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `SIMONA_PUPR_Ambon_Surat_Masuk_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('File CSV berhasil diunduh!', 'success');
+        }
+
+        function getSeksiBadge(seksi) {
+            if (seksi === 'Pengelolaan Sumber Daya Air') {
+                return `<span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-md font-semibold border border-blue-200"><i class="fa-solid fa-droplet text-blue-600"></i> Seksi SDA</span>`;
+            } else if (seksi === 'Infrastruktur Pemukiman') {
+                return `<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-md font-semibold border border-emerald-200"><i class="fa-solid fa-house-chimney text-emerald-600"></i> Seksi IP</span>`;
+            } else {
+                return `<span class="inline-flex items-center gap-1 bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-md font-semibold border border-teal-200"><i class="fa-solid fa-pump-soap text-teal-600"></i> Seksi Sanitasi</span>`;
+            }
+        }
+
+        function getSifatBadge(sifat) {
+            if (sifat === 'Sangat Penting') {
+                return `<span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded font-bold border border-red-200">Sangat Penting</span>`;
+            } else if (sifat === 'Penting') {
+                return `<span class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-bold border border-amber-200">Penting</span>`;
+            } else {
+                return `<span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium border border-slate-200">Biasa</span>`;
+            }
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'Belum Diproses') {
+                return `<span class="bg-red-50 text-red-600 text-xs px-2 py-0.5 rounded font-bold border border-red-200">Belum Diproses</span>`;
+            } else if (status === 'Dalam Proses') {
+                return `<span class="bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded font-bold border border-amber-200">Dalam Proses</span>`;
+            } else if (status === 'Ditindaklanjuti') {
+                return `<span class="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded font-bold border border-purple-200">Ditindaklanjuti</span>`;
+            } else {
+                return `<span class="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded font-bold border border-emerald-200">Selesai</span>`;
+            }
+        }
+
+        function formatDateID(dateStr) {
+            if (!dateStr) return '-';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString('id-ID', options);
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            let bgColor = 'bg-slate-800 text-white';
+            if (type === 'success') bgColor = 'bg-emerald-600 text-white';
+            if (type === 'warning') bgColor = 'bg-amber-600 text-white';
+
+            toast.className = `fixed bottom-5 right-5 z-50 ${bgColor} text-xs font-bold px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
